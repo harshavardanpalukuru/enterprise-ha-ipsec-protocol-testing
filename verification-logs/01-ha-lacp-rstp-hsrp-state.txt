@@ -1,0 +1,52 @@
+=== 1. LACP ETHERCHANNEL VERIFICATION (HQ-SW1) ===
+HQ-SW1#show etherchannel summary
+Number of channel-groups in use: 1
+Number of aggregators:           1
+Group  Port-channel  Protocol    Ports
+------+-------------+-----------+-----------------------------------------------
+1      Po1(SU)         LACP      Gi0/0(P)    Gi0/1(P)
+=== 2. RAPID-PVST+ ROOT BRIDGE & PORTFAST VERIFICATION (HQ-SW1) ===
+HQ-SW1#show spanning-tree vlan 10
+VLAN0010
+  Spanning tree enabled protocol rstp
+  Root ID    Priority    24586
+             Address     0c6f.f6bd.0000
+             This bridge is the root
+             Hello Time   2 sec  Max Age 20 sec  Forward Delay 15 sec
+  Bridge ID  Priority    24586  (priority 24576 sys-id-ext 10)
+             Address     0c6f.f6bd.0000
+             Hello Time   2 sec  Max Age 20 sec  Forward Delay 15 sec
+             Aging Time  300 sec
+Interface           Role Sts Cost      Prio.Nbr Type
+------------------- ---- --- --------- -------- --------------------------------
+Gi0/2               Desg FWD 4         128.3    P2p Edge
+Gi0/3               Desg FWD 4         128.4    P2p Edge
+Po1                 Desg FWD 3         128.65   P2p
+=== 3. LAYER 2 SECURITY: DHCP SNOOPING & DYNAMIC ARP INSPECTION (HQ-SW1) ===
+HQ-SW1#show ip dhcp snooping
+Switch DHCP snooping is enabled
+DHCP snooping is configured on following VLANs: 10
+DHCP snooping is operational on following VLANs: 10
+Interface                  Trusted    Allow option    Rate limit (pps)
+-----------------------    -------    ------------    ----------------
+GigabitEthernet0/0         yes        yes             unlimited
+GigabitEthernet0/1         yes        yes             unlimited
+GigabitEthernet0/2         yes        yes             unlimited
+Port-channel1              yes        yes             unlimited
+HQ-SW1#show ip arp inspection vlan 10
+ Vlan      Configuration    Operation   ACL Match          Static ACL
+ ----      -------------    ---------   ---------          ----------
+   10      Enabled          Active      STATIC_HOST_ARP    No
+=== 4. HSRP ACTIVE/STANDBY FAILOVER & PREEMPTION VERIFICATION ===
+HQ-R1#show standby brief
+Interface   Grp  Pri P State   Active          Standby         Virtual IP
+Gi0/0       10   110 P Active  local           10.10.10.3      10.10.10.1
+--- Fault Injected: HQ-R1 Gi0/0 Shutdown ---
+*Nov 14 12:06:00.530: %HSRP-5-STATECHANGE: GigabitEthernet0/0 Grp 10 state Standby -> Active
+HQ-R2#show standby brief
+Interface   Grp  Pri P State   Active          Standby         Virtual IP
+Gi0/0       10   100 P Active  local           unknown         10.10.10.1
+--- Recovery: HQ-R1 Gi0/0 Restored (Preemption in 74ms) ---
+*Nov 14 12:09:03.435: %LINEPROTO-5-UPDOWN: Line protocol on Interface GigabitEthernet0/0, changed state to up
+*Nov 14 12:09:03.509: %HSRP-5-STATECHANGE: GigabitEthernet0/0 Grp 10 state Listen -> Active
+*Nov 14 12:10:00.498: %HSRP-5-STATECHANGE: GigabitEthernet0/0 Grp 10 state Speak -> Standby

@@ -1,0 +1,36 @@
+=== 1. OSPF AREA 0 ADJACENCY & ROUTE TABLE OVER GRE/IPSEC TUNNEL ===
+HQ-R1#show ip ospf neighbor
+Neighbor ID     Pri   State           Dead Time   Address         Interface
+2.2.2.2           0   FULL/  -        00:00:32    10.255.0.10     Tunnel0
+HQ-R1#show ip route ospf
+      10.0.0.0/8 is variably subnetted, 8 subnets, 3 masks
+O        10.20.10.0/24 [110/1001] via 10.255.0.10, 00:21:48, Tunnel0
+=== 2. ISAKMP PHASE 1 & IPSEC PHASE 2 SECURITY ASSOCIATIONS (HQ-R1) ===
+HQ-R1#show crypto isakmp sa
+IPv4 Crypto ISAKMP SA
+dst             src             state          conn-id status
+10.255.0.1      10.255.0.6      QM_IDLE           1001 ACTIVE
+HQ-R1#show crypto ipsec sa
+interface: Tunnel0
+    Crypto map tag: Tunnel0-head-0, local addr 10.255.0.1
+   protected vrf: (none)
+   local  ident (addr/mask/prot/port): (10.255.0.1/255.255.255.255/47/0)
+   remote ident (addr/mask/prot/port): (10.255.0.6/255.255.255.255/47/0)
+   current_peer 10.255.0.6 port 500
+     PERMIT, flags={origin_is_acl,}
+    #pkts encaps: 161, #pkts encrypt: 161, #pkts digest: 161
+    #pkts decaps: 163, #pkts decrypt: 163, #pkts verify: 163
+    #send errors 0, #recv errors 0
+     local crypto endpt.: 10.255.0.1, remote crypto endpt.: 10.255.0.6
+     plaintext mtu 1458, path mtu 1500, ip mtu 1500, ip mtu idb GigabitEthernet0/1
+     current outbound spi: 0x68343D32(1748254002)
+     inbound esp sas:
+      spi: 0xBFB67F41(3216408385)
+        transform: esp-256-aes esp-sha256-hmac ,
+        in use settings ={Transport, }
+        Status: ACTIVE(ACTIVE)
+     outbound esp sas:
+      spi: 0x68343D32(1748254002)
+        transform: esp-256-aes esp-sha256-hmac ,
+        in use settings ={Transport, }
+        Status: ACTIVE(ACTIVE)

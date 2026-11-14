@@ -1,0 +1,27 @@
+=== TAC CASE 1: OSPF STUCK IN EXSTART DUE TO TUNNEL MTU MISMATCH ===
+--- Fault Injected on BR-R1 (Tunnel0 IP MTU set to 1460 while HQ-R1 is 1400) ---
+BR-R1(config)#interface Tunnel0
+BR-R1(config-if)# ip mtu 1460
+%Warning: IP MTU value set 1460 is greater than the current transport value 1434, fragmentation may occur
+*Nov 14 12:12:44.921: %TUN-4-MTUCONFIGEXCEEDSTRMTU_IPV4: Tunnel0 IPv4 MTU configured 1460 exceeds tunnel transport MTU 1434
+*Nov 14 12:12:49.123: %OSPF-5-ADJCHG: Process 1, Nbr 1.1.1.1 on Tunnel0 from FULL to DOWN, Neighbor Down: Interface down or detached
+BR-R1#show ip ospf neighbor
+Neighbor ID     Pri   State           Dead Time   Address         Interface
+1.1.1.1           0   EXSTART/  -     00:00:38    10.255.0.9      Tunnel0
+--- Root Cause Analysis (RCA) ---
+1. OSPF Database Description (DBD) packets include the egress interface IP MTU field.
+2. Because BR-R1 advertised MTU 1460 while HQ-R1 advertised MTU 1400, both routers rejected the Master/Slave DBD exchange and remained stuck in EXSTART.
+3. Furthermore, %TUN-4-MTUCONFIGEXCEEDSTRMTU_IPV4 confirmed that IPSec ESP transport + GRE encapsulation overhead consumes 66 bytes of the 1500-byte physical WAN MTU (leaving a transport MTU ceiling of 1434 bytes).
+--- Resolution: Aligned Tunnel0 IP MTU to 1400 & TCP MSS to 1360 ---
+BR-R1#show ip ospf neighbor
+Neighbor ID     Pri   State           Dead Time   Address         Interface
+1.1.1.1           0   FULL/  -        00:00:34    10.255.0.9      Tunnel0
+=== TAC CASE 2: PATH MTU DISCOVERY (PMTUD) & DF-BIT VERIFICATION (HQ-Host) ===
+HQ-Host> ping 10.20.10.50 -l 1450 -D
+*10.10.10.2 icmp_seq=1 ttl=255 time=22.338 ms (ICMP type:3, code:4, Fragmentation required, and DF flag set)
+*10.10.10.2 icmp_seq=2 ttl=255 time=12.908 ms (ICMP type:3, code:4, Fragmentation required, and DF flag set)
+*10.10.10.2 icmp_seq=3 ttl=255 time=18.573 ms (ICMP type:3, code:4, Fragmentation required, and DF flag set)
+HQ-Host> ping 10.20.10.50 -l 1350 -D
+1378 bytes from 10.20.10.50 icmp_seq=1 ttl=62 time=73.620 ms
+1378 bytes from 10.20.10.50 icmp_seq=2 ttl=62 time=46.724 ms
+1378 bytes from 10.20.10.50 icmp_seq=3 ttl=62 time=45.039 ms
