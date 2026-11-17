@@ -221,7 +221,7 @@ On a standard `1500-byte` Ethernet WAN interface (`Gi0/1`), GRE + IPSec Transpor
 To support NOC fault monitoring without exposing plain-text community strings (`public`/`private`), `HQ-R1` is configured with **SNMPv3 (`authPriv`)** using `SHA` authentication and `AES-128` payload encryption alongside event-driven traps for HSRP and OSPF state transitions:
 
     snmp-server group NOC_V3_GRP v3 priv
-    snmp-server user nocadmin NOC_V3_GRP v3 auth sha AuthPass2026! priv aes 128 PrivPass2026!
+    snmp-server user nocadmin NOC_V3_GRP v3 auth sha <AUTH_PASSPHRASE> priv aes 128 <PRIV_PASSPHRASE>
     snmp-server enable traps hsrp
     snmp-server enable traps ospf state-change
     logging host 10.10.10.50
